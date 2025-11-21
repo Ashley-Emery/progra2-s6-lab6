@@ -81,7 +81,7 @@ public class MiCmd {
                 break;
             case "wr":
                 sb.append(cmdWrite(argumentos));
-                break; 
+                break;
             case "rd":
                 sb.append(cmdRead(argumentos));
                 break;
@@ -191,6 +191,10 @@ public class MiCmd {
             } else {
                 return "No hay carpeta padre.\n";
             }
+        }
+
+        if (argumento.contains("../")) {
+            return "Comando no reconocido";
         }
 
         File nueva = new File(currentDir, argumento);

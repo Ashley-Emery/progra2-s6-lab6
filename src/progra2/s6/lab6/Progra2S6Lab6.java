@@ -14,7 +14,8 @@ public class Progra2S6Lab6 {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
+        FrameCMD cmd=new FrameCMD();
+        cmd.setVisible(true);
     }
     
 }
