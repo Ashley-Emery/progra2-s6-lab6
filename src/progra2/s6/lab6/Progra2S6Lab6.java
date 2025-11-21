@@ -8,6 +8,8 @@ package progra2.s6.lab6;
  *
  * @author ashley
  */
+import javax.swing.SwingUtilities;
+
 public class Progra2S6Lab6 {
 
     /**
@@ -15,6 +17,10 @@ public class Progra2S6Lab6 {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        
+        SwingUtilities.invokeLater(() -> {
+            new VentanaCmd();
+        });
     }
     
 }
