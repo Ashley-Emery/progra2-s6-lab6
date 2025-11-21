@@ -11,6 +11,7 @@ package progra2.s6.lab6;
 
 import java.io.File;
 import java.awt.Component;
+import java.io.IOException;
 
 public class MiCmd {
     
@@ -101,6 +102,72 @@ public class MiCmd {
             return "Carpeta creada: " + nueva.getName() + "\n";
         } else {
             return "No se pudo crear la carpeta.\n";
+        }
+        
+    }
+    
+    public String cmdMfile(String nombre){
+        
+        if (nombre.isEmpty()){
+            return "Uso: Mfile <nombre.ext>\n";
+        }
+        
+        File archivo = new File(currentDir, nombre);
+        
+        if (archivo.exists()){
+            return "El archivo ya existe.\n";
+        }
+        
+        try{
+            
+            if (archivo.createNewFile()){
+                return "Archivo creado: " + archivo.getName() + "\n";
+            } else {
+                return "No se pudo crear el archivo.\n";
+            }
+            
+        } catch(IOException e){
+            return "Error al crear archivo: " + e.getMessage() + "\n";
+        }
+    }
+    
+    public boolean borrarRecursivo(File f){
+        
+        if (f.isDirectory()) {
+            
+            File[] hijos = f.listFiles();
+            
+            if (hijos != null){
+                
+                for (File h : hijos){
+                    borrarRecursivo(h);
+                }
+            }
+            
+        }
+        
+        return f.delete();
+        
+    }
+    
+    public String cmdRm(String nombre){
+        
+        if (nombre.isEmpty()) {
+            return "Uso: Rm <archivo/carpeta>\n";
+        }
+        
+        File objetivo = new File(currentDir, nombre);
+        
+        if (!objetivo.exists()) {
+            return "No existe el archivo/carpeta.\n";
+        }
+        
+        boolean ok = borrarRecursivo(objetivo);
+        
+        if (ok) {
+            return "Eliminado: " + nombre + "\n";
+        } else {
+            return "No se pudo eliminar: " + nombre + "\n";
         }
         
     }
