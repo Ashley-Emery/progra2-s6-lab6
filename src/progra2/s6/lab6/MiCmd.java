@@ -8,7 +8,6 @@ package progra2.s6.lab6;
  *
  * @author ashley
  */
-
 import java.io.File;
 import java.awt.Component;
 import java.io.FileWriter;
@@ -20,42 +19,45 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class MiCmd {
-    
+
     private File currentDir;
-    
-    public MiCmd(){
-        
+    private boolean modoEscritura = false;
+    private File archivoEscritura = null;
+
+    public MiCmd() {
+
         currentDir = new File("C:\\");
-        
-        if(!currentDir.exists()){
+
+        if (!currentDir.exists()) {
             currentDir = new File(System.getProperty("user.home"));
         }
     }
-    
-    public String getPrompt(){
+
+    public String getPrompt() {
         return "\n" + currentDir.getAbsolutePath() + ">";
     }
-    
-    public String procesarComando(String linea, Component parent){
-        
-        StringBuilder sb = new StringBuilder();
-        
+
+    public String procesarComando(String linea, Component parent) {
+
         linea = linea.trim();
-        
-        if(linea.isEmpty()){
+
+        if (modoEscritura) {
+            return escribirLinea(linea);
+        }
+
+        if (linea.isEmpty()) {
             return "";
         }
-        
+
         String[] partes = linea.split("\\s+");
-        
         String comando = partes[0];
-        String argumentos = "";
-        
-        if(linea.length() > comando.length()){
-            argumentos = linea.substring(comando.length()).trim();
-        }
-        
-        switch (comando){
+        String argumentos = (linea.length() > comando.length())
+                ? linea.substring(comando.length()).trim()
+                : "";
+
+        StringBuilder sb = new StringBuilder();
+
+        switch (comando) {
             case "Mkdir":
                 sb.append(cmdMkdir(argumentos));
                 break;
@@ -78,130 +80,128 @@ public class MiCmd {
                 sb.append(cmdTime());
                 break;
             case "wr":
-                sb.append(cmdWrite(argumentos, parent));
-                break;
+                sb.append(cmdWrite(argumentos));
+                break; 
             case "rd":
                 sb.append(cmdRead(argumentos));
                 break;
             default:
                 sb.append("Comando no reconocido.\n");
-                break;
         }
-        
+
         return sb.toString();
-        
     }
-    
-    public String cmdMkdir(String nombre){
-        
-        if(nombre.isEmpty()){
+
+    public String cmdMkdir(String nombre) {
+
+        if (nombre.isEmpty()) {
             return "Uso: Mkdir <nombre>\n";
         }
-        
+
         File nueva = new File(currentDir, nombre);
-        
+
         if (nueva.exists()) {
             return "La carpeta ya existe.\n";
         }
-        
+
         if (nueva.mkdir()) {
             return "Carpeta creada: " + nueva.getName() + "\n";
         } else {
             return "No se pudo crear la carpeta.\n";
         }
-        
+
     }
-    
-    public String cmdMfile(String nombre){
-        
-        if (nombre.isEmpty()){
+
+    public String cmdMfile(String nombre) {
+
+        if (nombre.isEmpty()) {
             return "Uso: Mfile <nombre.ext>\n";
         }
-        
+
         File archivo = new File(currentDir, nombre);
-        
-        if (archivo.exists()){
+
+        if (archivo.exists()) {
             return "El archivo ya existe.\n";
         }
-        
-        try{
-            
-            if (archivo.createNewFile()){
+
+        try {
+
+            if (archivo.createNewFile()) {
                 return "Archivo creado: " + archivo.getName() + "\n";
             } else {
                 return "No se pudo crear el archivo.\n";
             }
-            
-        } catch(IOException e){
+
+        } catch (IOException e) {
             return "Error al crear archivo: " + e.getMessage() + "\n";
         }
     }
-    
-    public boolean borrarRecursivo(File f){
-        
+
+    public boolean borrarRecursivo(File f) {
+
         if (f.isDirectory()) {
-            
+
             File[] hijos = f.listFiles();
-            
-            if (hijos != null){
-                
-                for (File h : hijos){
+
+            if (hijos != null) {
+
+                for (File h : hijos) {
                     borrarRecursivo(h);
                 }
             }
-            
+
         }
-        
+
         return f.delete();
-        
+
     }
-    
-    public String cmdRm(String nombre){
-        
+
+    public String cmdRm(String nombre) {
+
         if (nombre.isEmpty()) {
             return "Uso: Rm <archivo/carpeta>\n";
         }
-        
+
         File objetivo = new File(currentDir, nombre);
-        
+
         if (!objetivo.exists()) {
             return "No existe el archivo/carpeta.\n";
         }
-        
+
         boolean ok = borrarRecursivo(objetivo);
-        
+
         if (ok) {
             return "Eliminado: " + nombre + "\n";
         } else {
             return "No se pudo eliminar: " + nombre + "\n";
         }
-        
+
     }
-    
+
     public String cmdCd(String argumento) {
-        if (argumento.isEmpty()){
+        if (argumento.isEmpty()) {
             return "Uso: Cd <carpeta> o Cd ..\n";
         }
-        
-        if(argumento.equals("..")){
-            File padre= currentDir.getParentFile();
-            if(padre != null && padre.exists()){
+
+        if (argumento.equals("..")) {
+            File padre = currentDir.getParentFile();
+            if (padre != null && padre.exists()) {
                 currentDir = padre;
                 return "";
-            }else{
+            } else {
                 return "No hay carpeta padre.\n";
             }
         }
-        
+
         File nueva = new File(currentDir, argumento);
-        if(nueva.exists() && nueva.isDirectory()){
+        if (nueva.exists() && nueva.isDirectory()) {
             currentDir = nueva;
             return "";
-        }else{
-            return "La carpeta no existe: " + argumento +"\n";
+        } else {
+            return "La carpeta no existe: " + argumento + "\n";
         }
     }
-    
+
     public String cmdDir() {
         StringBuilder sb = new StringBuilder();
         File[] archivos = currentDir.listFiles();
@@ -221,54 +221,63 @@ public class MiCmd {
         return sb.toString();
     }
 
-    
-    public String cmdDate(){
+    public String cmdDate() {
         LocalDate hoy = LocalDate.now();
-        return "Fecha actual: "+ hoy.toString() + "\n";
+        return "Fecha actual: " + hoy.toString() + "\n";
     }
-    
-    public String cmdTime(){
+
+    public String cmdTime() {
         LocalTime ahora = LocalTime.now();
         String hora = ahora.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        return "Hora actual: "+ hora + "\n";
+        return "Hora actual: " + hora + "\n";
     }
-    
-    public String cmdWrite(String nombre, Component parent){
-        if(nombre.isEmpty()){
-            return "Uso: wr <archivo.ext\n";
+
+    public String cmdWrite(String nombre) {
+        if (nombre.isEmpty()) {
+            return "Uso: wr <archivo.ext>\n";
         }
+
         File archivo = new File(currentDir, nombre);
-        if(!archivo.exists() || archivo.isDirectory()){
-            return "El archivo no existe o es una carpeta\n";
+
+        if (!archivo.exists() || archivo.isDirectory()) {
+            return "El archivo no existe o es una carpeta.\n";
         }
-        
-        String texto =JOptionPane.showInputDialog(parent, "Ingrese el texto para escribir en " + nombre +":\n(Seagregara al final del archivo)"), "Escribir archivo", JOptionPane.PLAIN_MESSAGE);
-        
-        if(texto == null){
-            return "Operacion cancelada. \n";
-        }
-        
-        try(FileWriter fw = new FileWriter(archivo, true)){
-            fw.write(texto + System.lineSeparator());
-            return "Texto escrito en " + nombre + "\n";
-        }catch (IOException e){
+
+        modoEscritura = true;
+        archivoEscritura = archivo;
+
+        return "Escribiendo en " + nombre + "...\n"
+                + "(Escribe una línea y presiona ENTER para guardar)\n";
+    }
+
+    private String escribirLinea(String linea) {
+        try (FileWriter fw = new FileWriter(archivoEscritura, true)) {
+            fw.write(linea + System.lineSeparator());
+        } catch (IOException e) {
+            modoEscritura = false;
+            archivoEscritura = null;
             return "Error al escribir: " + e.getMessage() + "\n";
         }
+
+        modoEscritura = false;
+        archivoEscritura = null;
+
+        return "Texto guardado correctamente.\n";
     }
-    
-    public String cmdRead(String nombre){
-        if(nombre.isEmpty()){
+
+    public String cmdRead(String nombre) {
+        if (nombre.isEmpty()) {
             return "Uso: rd <archivo.ext>\n";
         }
         File archivo = new File(currentDir, nombre);
-        if(!archivo.exists() || archivo.isDirectory()){
+        if (!archivo.exists() || archivo.isDirectory()) {
             return "El archivo no existe o es una carpeta.\n";
-        } 
-        
-        try{
+        }
+
+        try {
             String contenido = Files.readString(archivo.toPath(), StandardCharsets.UTF_8);
             return "Contenido de " + nombre + ":\n" + contenido + "\n";
-        }catch(IOException e){
+        } catch (IOException e) {
             return "Error al leer: " + e.getMessage() + "\n";
         }
     }
