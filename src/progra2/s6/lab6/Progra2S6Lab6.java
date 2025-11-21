@@ -19,7 +19,7 @@ public class Progra2S6Lab6 {
         // TODO code application logic here
         
         SwingUtilities.invokeLater(() -> {
-            new VentanaCmd();
+            new FrameCMD().setVisible(true);
         });
     }
     
