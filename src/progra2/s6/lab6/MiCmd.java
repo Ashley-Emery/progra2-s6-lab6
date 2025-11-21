@@ -11,7 +11,13 @@ package progra2.s6.lab6;
 
 import java.io.File;
 import java.awt.Component;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class MiCmd {
     
@@ -63,7 +69,7 @@ public class MiCmd {
                 sb.append(cmdCd(argumentos));
                 break;
             case "Dir":
-                sb.append(cmdDir(argumentos));
+                sb.append(cmdDir());
                 break;
             case "Date":
                 sb.append(cmdDate());
@@ -172,6 +178,98 @@ public class MiCmd {
         
     }
     
+    public String cmdCd(String argumento) {
+        if (argumento.isEmpty()){
+            return "Uso: Cd <carpeta> o Cd ..\n";
+        }
+        
+        if(argumento.equals("..")){
+            File padre= currentDir.getParentFile();
+            if(padre != null && padre.exists()){
+                currentDir = padre;
+                return "";
+            }else{
+                return "No hay carpeta padre.\n";
+            }
+        }
+        
+        File nueva = new File(currentDir, argumento);
+        if(nueva.exists() && nueva.isDirectory()){
+            currentDir = nueva;
+            return "";
+        }else{
+            return "La carpeta no existe: " + argumento +"\n";
+        }
+    }
     
+    public String cmdDir() {
+        StringBuilder sb = new StringBuilder();
+        File[] archivos = currentDir.listFiles();
+        if (archivos == null || archivos.length == 0) {
+            sb.append("La carpeta está vacía.\n");
+            return sb.toString();
+        }
+
+        sb.append("Contenido de ").append(currentDir.getAbsolutePath()).append(":\n");
+        for (File f : archivos) {
+            if (f.isDirectory()) {
+                sb.append("<DIR>  ").append(f.getName()).append("\n");
+            } else {
+                sb.append("       ").append(f.getName()).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
     
+    public String cmdDate(){
+        LocalDate hoy = LocalDate.now();
+        return "Fecha actual: "+ hoy.toString() + "\n";
+    }
+    
+    public String cmdTime(){
+        LocalTime ahora = LocalTime.now();
+        String hora = ahora.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        return "Hora actual: "+ hora + "\n";
+    }
+    
+    public String cmdWrite(String nombre, Component parent){
+        if(nombre.isEmpty()){
+            return "Uso: wr <archivo.ext\n";
+        }
+        File archivo = new File(currentDir, nombre);
+        if(!archivo.exists() || archivo.isDirectory()){
+            return "El archivo no existe o es una carpeta\n";
+        }
+        
+        String texto =JOptionPane.showInputDialog(parent, "Ingrese el texto para escribir en " + nombre +":\n(Seagregara al final del archivo)"), "Escribir archivo", JOptionPane.PLAIN_MESSAGE);
+        
+        if(texto == null){
+            return "Operacion cancelada. \n";
+        }
+        
+        try(FileWriter fw = new FileWriter(archivo, true)){
+            fw.write(texto + System.lineSeparator());
+            return "Texto escrito en " + nombre + "\n";
+        }catch (IOException e){
+            return "Error al escribir: " + e.getMessage() + "\n";
+        }
+    }
+    
+    public String cmdRead(String nombre){
+        if(nombre.isEmpty()){
+            return "Uso: rd <archivo.ext>\n";
+        }
+        File archivo = new File(currentDir, nombre);
+        if(!archivo.exists() || archivo.isDirectory()){
+            return "El archivo no existe o es una carpeta.\n";
+        } 
+        
+        try{
+            String contenido = Files.readString(archivo.toPath(), StandardCharsets.UTF_8);
+            return "Contenido de " + nombre + ":\n" + contenido + "\n";
+        }catch(IOException e){
+            return "Error al leer: " + e.getMessage() + "\n";
+        }
+    }
 }
