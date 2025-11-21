@@ -6,6 +6,8 @@ package progra2.s6.lab6;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 /**
  *
@@ -14,17 +16,17 @@ import java.awt.*;
 public class FrameCMD extends JFrame {
 
     private final MiCmd cmd;
-    private final JTextArea areaConsola;
-    private final JTextField campoEntrada;
+    private final JTextArea consola;
     private final JScrollPane scroll;
+
+    private String promptActual = "";
 
     public FrameCMD() {
         super("CMD");
 
         cmd = new MiCmd();
-        areaConsola = crearAreaConsola();
-        campoEntrada = crearCampoEntrada();
-        scroll = new JScrollPane(areaConsola);
+        consola = crearConsola();
+        scroll = new JScrollPane(consola);
 
         setSize(800, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -33,7 +35,6 @@ public class FrameCMD extends JFrame {
 
         setLayout(new BorderLayout());
         add(scroll, BorderLayout.CENTER);
-        add(campoEntrada, BorderLayout.SOUTH);
 
         setVisible(true);
 
@@ -42,54 +43,80 @@ public class FrameCMD extends JFrame {
         mostrarPrompt();
     }
 
-    private JTextArea crearAreaConsola() {
+    private JTextArea crearConsola() {
         JTextArea txt = new JTextArea();
-        txt.setEditable(false);
-        txt.setFont(new Font("Arial", Font.PLAIN, 14));
+        txt.setEditable(true);
+        txt.setFont(new Font("Consolas", Font.PLAIN, 16));
         txt.setBackground(Color.BLACK);
         txt.setForeground(Color.WHITE);
         txt.setMargin(new Insets(5, 5, 5, 5));
-        return txt;
-    }
 
-    private JTextField crearCampoEntrada() {
-        JTextField txt = new JTextField();
-        txt.setFont(new Font("Arial", Font.PLAIN, 14));
-        txt.addActionListener(e -> {
-            String linea = txt.getText();
-            txt.setText("");
-            entrada(linea);
+        txt.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+                int caretPos = consola.getCaretPosition();
+                int limite = consola.getText().lastIndexOf(promptActual) + promptActual.length();
+
+                if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE && caretPos <= limite) {
+                    e.consume();
+                    return;
+                }
+
+                if (e.getKeyCode() == KeyEvent.VK_DELETE && caretPos < consola.getText().length()
+                        && caretPos < limite) {
+                    e.consume();
+                    return;
+                }
+
+                if (e.getKeyCode() == KeyEvent.VK_LEFT && caretPos <= limite) {
+                    e.consume();
+                    consola.setCaretPosition(consola.getText().length());
+                    return;
+                }
+
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    e.consume();
+
+                    String texto = consola.getText();
+                    int posPrompt = texto.lastIndexOf(promptActual);
+
+                    String comando = texto.substring(posPrompt + promptActual.length()).trim();
+
+                    procesarEntrada(comando);
+                    return;
+                }
+
+                if (caretPos < limite) {
+                    consola.setCaretPosition(consola.getText().length());
+                }
+            }
         });
+
         return txt;
     }
 
     private void imprimir(String texto) {
-        areaConsola.append(texto);
-        areaConsola.setCaretPosition(areaConsola.getDocument().getLength());
+        consola.append(texto);
+        consola.setCaretPosition(consola.getDocument().getLength());
     }
 
     private void mostrarPrompt() {
-        imprimir(cmd.getPrompt());
+        promptActual = cmd.getPrompt();
+        imprimir(promptActual);
     }
 
-    private void entrada(String linea) {
-        String comando = linea == null ? "" : linea.trim();
+    private void procesarEntrada(String comando) {
+        imprimir("\n");
 
-        if (comando.isBlank()) {
-            imprimir("\n");
-            mostrarPrompt();
-            return;
-        }
-
-        imprimir(comando + "\n");
-
-        String respuesta = cmd.procesarComando(comando, this);
-
-        if (respuesta != null && !respuesta.isBlank()) {
-            imprimir(respuesta);
+        if (!comando.isBlank()) {
+            String salida = cmd.procesarComando(comando, this);
+            if (salida != null) {
+                imprimir(salida);
+            }
         }
 
         mostrarPrompt();
     }
-
 }
